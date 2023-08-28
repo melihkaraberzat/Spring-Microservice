@@ -2,6 +2,7 @@ package com.melih.stockmanagement.productservice.service.impl;
 
 import com.melih.stockmanagement.productservice.enums.Language;
 import com.melih.stockmanagement.productservice.exception.enums.FriendlyMessageCodes;
+import com.melih.stockmanagement.productservice.exception.exceptions.ProductAlreadyDeletedException;
 import com.melih.stockmanagement.productservice.exception.exceptions.ProductNotCreatedException;
 import com.melih.stockmanagement.productservice.exception.exceptions.ProductNotFoundException;
 import com.melih.stockmanagement.productservice.repository.ProductRepository;
@@ -80,6 +81,17 @@ public class ProductRepositoryServiceImpl implements IProductRepositoryService {
 
     @Override
     public Product deleteProduct(Language language, Long productId) {
-        return null;
+        log.debug("[{}][deleteProduct] -> request productId: {}",this.getClass().getSimpleName(),productId);
+        Product product;
+        try {
+            product = getProduct(language,productId);
+            product.setDeleted(true);
+            product.setProductUpdatedDate(new Date());
+            Product productResponse = productRepository.save(product);
+            log.debug("[{}][deleteProduct] -> response: {}",this.getClass().getSimpleName(),productResponse);
+            return productResponse;
+        } catch (ProductNotFoundException productNotFoundException) {
+            throw new ProductAlreadyDeletedException(language,FriendlyMessageCodes.PRODUCT_ALREADY_DELETED,"Product already deleted product id: "+productId);
+        }
     }
 }
